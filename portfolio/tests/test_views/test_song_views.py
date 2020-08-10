@@ -58,7 +58,7 @@ class SongViewsetTest(APITestCase):
 
     song_genre = SongGenreFactory(genre=genre, song=song)
  
-    self.assertListEqual([song], list(SongViewset._filter_by_genre(genres=['Rock'])))
+    self.assertListEqual([song.id], list(SongViewset._filter_by_genre(genres='Rock')))
 
   def test_retrieve_songs_returns_songs_on_certain_suitability(self):
 
@@ -68,11 +68,4 @@ class SongViewsetTest(APITestCase):
 
     song_genre = SongSuitabilityFactory(suitability=suitability, song=song)
  
-    self.assertListEqual([song], list(SongViewset._filter_by_suitability(suitabilities=['Battle'])))
-
-  def test_retrieve_free_songs_only(self):
-
-    song = SongFactory(title='Sana', is_free=True)
-    song2 = SongFactory(title='Kabet', is_free=False)
-
-    self.assertListEqual([song], list(SongViewset._filter_free(True)))
+    self.assertListEqual([song.id], list(SongViewset._filter_by_suitability(suitabilities='Battle')))

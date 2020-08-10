@@ -17,11 +17,13 @@ class SongViewset(ViewSet):
 
   def list(self, request):
 
-    songs = self._retrieve_songs()
+    # songs = self._retrieve_songs()
+
+    songs = list(self.get_queryset())
 
     serializer = SongSerializer(songs, many=True)
 
-    self.get_queryset()
+    # print(self.get_queryset())
 
     return Response(status=status.HTTP_200_OK, data=serializer.data)
 
@@ -44,37 +46,38 @@ class SongViewset(ViewSet):
     suitability= self.request.query_params.get('suitability')
     is_free = self.request.query_params.get('is_free') 
 
-    queryset = Q()
-
-    # Fix queryset so that it uses these custom querysets
+    queryset = Song.objects.filter()
 
     if genres:
-      _filter_by_genre()
+      genre_songs_ids = self._filter_by_genre(genres)
+      queryset = Song.objects.filter(id__in=genre_songs_ids)
+
+    if suitability:
+      suitability_songs_ids = self._filter_by_suitability(suitability)
+      queryset = queryset.filter(id__in=suitability_songs_ids)
+
+    if is_free:
+      queryset = queryset.filter(is_free=is_free)
 
     return queryset
 
   @staticmethod
   def _filter_by_genre(genres):
-    genres = Genre.objects.filter(name__in=genres)
-    genre_songs_ids = SongGenre.objects.filter(genre__in=genres).values_list('song_id', flat=True)
-  
-    queryset = Song.objects.filter(id__in=genre_songs_ids)
-    
-    return queryset
+
+    genres = genres.split(',')
+    genres_filter = Genre.objects.filter(name__in=genres)
+    genre_songs_ids = SongGenre.objects.filter(genre__in=genres_filter).values_list('song_id', flat=True)
+
+    return genre_songs_ids
 
   @staticmethod
   def _filter_by_suitability(suitabilities):
-    suitabilities = Suitability.objects.filter(name__in=suitabilities)
-    suitability_song_ids = SongSuitability.objects.filter(suitability__in=suitabilities).values_list('song_id', flat=True)
+
+    suitabilities = suitabilities.split(',')
+    suitabilities_ids = Suitability.objects.filter(name__in=suitabilities)
+    suitability_song_ids = SongSuitability.objects.filter(suitability__in=suitabilities_ids).values_list('song_id', flat=True)
   
-    queryset = Song.objects.filter(id__in=suitability_song_ids)
-    
-    return queryset
-
-  @staticmethod
-  def _filter_free(is_free):
-
-    return Song.objects.filter(is_free=is_free)
+    return suitability_song_ids
 
   @staticmethod
   def _retrieve_songs():
