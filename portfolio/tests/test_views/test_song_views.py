@@ -4,6 +4,12 @@ from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
 
 from portfolio.tests.factories.song_factory import SongFactory
+from portfolio.tests.factories.genre_factory import GenreFactory, SongGenreFactory, SuitabilityFactory, SongSuitabilityFactory
+
+
+from portfolio.views.song_views import SongViewset
+
+from portfolio.models.genres import SongGenre, Genre
 
 
 class SongViewsetTest(APITestCase):
@@ -36,3 +42,37 @@ class SongViewsetTest(APITestCase):
     response = self.client.get("{}{}/".format(self.url, "0"))
 
     self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+  def test_retrieve_songs_returns_all_songs(self):
+
+    song = SongFactory()
+    song2 = SongFactory()
+
+    self.assertEqual(len(SongViewset._retrieve_songs()), 2)
+
+  def test_retrieve_songs_returns_songs_on_certain_genre(self):
+
+    genre = GenreFactory(name='Rock')
+    song = SongFactory(title='Sana')
+    song2 = SongFactory(title='Kabet')
+
+    song_genre = SongGenreFactory(genre=genre, song=song)
+ 
+    self.assertListEqual([song], list(SongViewset._filter_by_genre(genres=['Rock'])))
+
+  def test_retrieve_songs_returns_songs_on_certain_suitability(self):
+
+    suitability = SuitabilityFactory(name='Battle')
+    song = SongFactory(title='Sana')
+    song2 = SongFactory(title='Kabet')
+
+    song_genre = SongSuitabilityFactory(suitability=suitability, song=song)
+ 
+    self.assertListEqual([song], list(SongViewset._filter_by_suitability(suitabilities=['Battle'])))
+
+  def test_retrieve_free_songs_only(self):
+
+    song = SongFactory(title='Sana', is_free=True)
+    song2 = SongFactory(title='Kabet', is_free=False)
+
+    self.assertListEqual([song], list(SongViewset._filter_free(True)))
